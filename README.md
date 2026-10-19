@@ -130,7 +130,23 @@ Frontend setup instructions will be added when the React application is ready.
 
 ## Development Status
 
-SkillTrack is an active learning and portfolio project. Features are being implemented incrementally, with a focus on clean backend architecture, authentication, database design, and automated testing.
+- [x] Set up the FastAPI backend
+- [x] Configure PostgreSQL and SQLAlchemy
+- [x] Implement user registration and login
+- [x] Add JWT-based authentication
+- [x] Create initial database models
+- [ ] Complete course management APIs
+- [ ] Add role-based authorization
+- [ ] Build the React frontend
+- [ ] Add comprehensive automated tests
+- [ ] Write API usage and deployment documentation
+
+## Project Goals
+
+- Build a maintainable full-stack application.
+- Practice backend development and database design.
+- Improve API security and automated testing.
+- Follow Git and GitHub best practices throughout development.
 
 ## Author
 
