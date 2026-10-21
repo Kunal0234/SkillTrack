@@ -11,6 +11,9 @@ import jwt
 from app.config import settings
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
+from app.models.course import Course
+from app.schemas.course import CourseCreate
+
 app = FastAPI(title="SkillTrack LMS")
 
 
@@ -115,4 +118,34 @@ def get_my_profile(current_user: User = Depends(get_current_user)):
         "name": current_user.name,
         "email": current_user.email,
         "role": current_user.role
+    }
+
+
+@app.post("/courses")
+def create_course(
+    course_info: CourseCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role != "instructor":
+        raise HTTPException(
+            status_code=403,
+            detail="Only instructors can create courses"
+        )
+
+    new_course = Course(
+        title=course_info.title,
+        description=course_info.description,
+        instructor_id=current_user.id
+    )
+
+    db.add(new_course)
+    db.commit()
+    db.refresh(new_course)
+
+    return {
+        "id": new_course.id,
+        "title": new_course.title,
+        "description": new_course.description,
+        "instructor_id": new_course.instructor_id
     }
