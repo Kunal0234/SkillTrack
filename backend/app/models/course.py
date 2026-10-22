@@ -1,4 +1,4 @@
-
+from sqlalchemy.orm import relationship
 from app.database import Base
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.sql import func
@@ -12,3 +12,4 @@ class Course(Base):
     description = Column(String, nullable=True)
     instructor_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    instructor = relationship("User", back_populates="courses")

@@ -13,6 +13,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from app.models.course import Course
 from app.schemas.course import CourseCreate
+from app.schemas.course import CourseCreate, CourseRead
 
 app = FastAPI(title="SkillTrack LMS")
 
@@ -149,3 +150,8 @@ def create_course(
         "description": new_course.description,
         "instructor_id": new_course.instructor_id
     }
+
+@app.get("/courses", response_model=list[CourseRead])
+def get_courses(db: Session = Depends(get_db)):
+    courses = db.query(Course).all()
+    return courses
