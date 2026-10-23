@@ -12,8 +12,7 @@ from app.config import settings
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from app.models.course import Course
-from app.schemas.course import CourseCreate
-from app.schemas.course import CourseCreate, CourseRead
+from app.schemas.course import CourseCreate,CourseRead
 
 app = FastAPI(title="SkillTrack LMS")
 
