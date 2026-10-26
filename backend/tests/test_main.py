@@ -137,3 +137,106 @@ def test_get_courses():
 
     assert response.status_code == 200
     assert isinstance(response.json(), list)
+
+def test_instructor_can_update_own_course():
+    db = TestingSessionLocal()
+
+    instructor = User(
+        name="Update Instructor",
+        email="update_instructor@example.com",
+        password_hash=hash_password("test_password"),
+        role="instructor"
+    )
+
+    db.add(instructor)
+    db.commit()
+    db.refresh(instructor)
+    instructor_id = instructor.id
+    db.close()
+
+    login_response = client.post(
+        "/login",
+        json={
+            "email": "update_instructor@example.com",
+            "password": "test_password"
+        }
+    )
+
+    assert login_response.status_code == 200
+    token = login_response.json()["access_token"]
+
+    create_response = client.post(
+        "/courses",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "title": "Python Basics",
+            "description": "Learn Python"
+        }
+    )
+
+    assert create_response.status_code == 200
+    course_id = create_response.json()["id"]
+
+    update_response = client.put(
+        f"/courses/{course_id}",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "title": "Advanced Python",
+            "description": "Learn advanced Python"
+        }
+    )
+
+    assert update_response.status_code == 200
+    assert update_response.json()["title"] == "Advanced Python"
+    assert update_response.json()["description"] == "Learn advanced Python"
+    assert update_response.json()["instructor_id"] == instructor_id
+
+def test_instructor_can_delete_own_course():
+    db = TestingSessionLocal()
+
+    instructor = User(
+        name="Delete Instructor",
+        email="delete_instructor@example.com",
+        password_hash=hash_password("test_password"),
+        role="instructor"
+    )
+
+    db.add(instructor)
+    db.commit()
+    db.refresh(instructor)
+    db.close()
+
+    login_response = client.post(
+        "/login",
+        json={
+            "email": "delete_instructor@example.com",
+            "password": "test_password"
+        }
+    )
+
+    assert login_response.status_code == 200
+    token = login_response.json()["access_token"]
+
+    create_response = client.post(
+        "/courses",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "title": "Temporary Course",
+            "description": "Course for delete testing"
+        }
+    )
+
+    assert create_response.status_code == 200
+    course_id = create_response.json()["id"]
+
+    delete_response = client.delete(
+        f"/courses/{course_id}",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert delete_response.status_code == 200
+    assert delete_response.json()["message"] == "Course deleted successfully"
+
+    get_response = client.get(f"/courses/{course_id}")
+    assert get_response.status_code == 404
+    
