@@ -239,4 +239,3 @@ def test_instructor_can_delete_own_course():
 
     get_response = client.get(f"/courses/{course_id}")
     assert get_response.status_code == 404
-    
