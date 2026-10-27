@@ -14,6 +14,8 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.models.course import Course
 from app.schemas.course import CourseCreate,CourseRead
 
+from app.models.enrollment import Enrollment
+from app.schemas.enrollment import EnrollmentRead
 app = FastAPI(title="SkillTrack LMS")
 
 
@@ -221,3 +223,67 @@ def delete_course(
     db.commit()
 
     return {"message": "Course deleted successfully"}
+
+
+@app.post("/courses/{course_id}/enroll", response_model=EnrollmentRead, status_code=201)
+def enroll_in_course(
+    course_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if current_user.role != "student":
+        raise HTTPException(
+            status_code=403,
+            detail="Only students can enroll in courses",
+        )
+
+    course = db.query(Course).filter(Course.id == course_id).first()
+
+    if course is None:
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    existing_enrollment = (
+        db.query(Enrollment)
+        .filter(
+            Enrollment.student_id == current_user.id,
+            Enrollment.course_id == course_id,
+        )
+        .first()
+    )
+
+    if existing_enrollment:
+        raise HTTPException(
+            status_code=409,
+            detail="You are already enrolled in this course",
+        )
+
+    enrollment = Enrollment(
+        student_id=current_user.id,
+        course_id=course_id,
+    )
+
+    db.add(enrollment)
+    db.commit()
+    db.refresh(enrollment)
+
+    return enrollment
+
+
+@app.get("/my-enrollments", response_model=list[EnrollmentRead])
+def get_my_enrollments(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if current_user.role != "student":
+        raise HTTPException(
+            status_code=403,
+            detail="Only students can view their enrollments",
+        )
+
+    enrollments = (
+        db.query(Enrollment)
+        .filter(Enrollment.student_id == current_user.id)
+        .all()
+    )
+
+    return enrollments

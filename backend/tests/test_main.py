@@ -6,7 +6,7 @@ from app.main import app
 from app.database import Base, get_db
 from app.models.user import User
 from app.security import hash_password
-
+from app.models.course import Course
 test_engine = create_engine(
     "sqlite://",
     connect_args={"check_same_thread": False},
@@ -239,3 +239,149 @@ def test_instructor_can_delete_own_course():
 
     get_response = client.get(f"/courses/{course_id}")
     assert get_response.status_code == 404
+
+
+def create_student_and_course(label):
+    db = TestingSessionLocal()
+
+    student = User(
+        name="Enrollment Student",
+        email=f"student_{label}@example.com",
+        password_hash=hash_password("test_password"),
+        role="student",
+    )
+
+    instructor = User(
+        name="Enrollment Instructor",
+        email=f"instructor_{label}@example.com",
+        password_hash=hash_password("test_password"),
+        role="instructor",
+    )
+
+    db.add_all([student, instructor])
+    db.commit()
+    db.refresh(instructor)
+
+    course = Course(
+        title="Enrollment Test Course",
+        description="Course for enrollment testing",
+        instructor_id=instructor.id,
+    )
+
+    db.add(course)
+    db.commit()
+    db.refresh(course)
+
+    course_id = course.id
+    db.close()
+
+    login_response = client.post(
+        "/login",
+        json={
+            "email": f"student_{label}@example.com",
+            "password": "test_password",
+        },
+    )
+
+    assert login_response.status_code == 200
+    token = login_response.json()["access_token"]
+
+    return token, course_id
+
+
+def test_student_can_enroll_in_course():
+    token, course_id = create_student_and_course("success")
+
+    response = client.post(
+        f"/courses/{course_id}/enroll",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 201
+
+    data = response.json()
+    assert data["course_id"] == course_id
+    assert "student_id" in data
+    assert "enrolled_at" in data
+
+
+def test_student_cannot_enroll_twice():
+    token, course_id = create_student_and_course("duplicate")
+
+    headers = {"Authorization": f"Bearer {token}"}
+    url = f"/courses/{course_id}/enroll"
+
+    first_response = client.post(url, headers=headers)
+    assert first_response.status_code == 201
+
+    second_response = client.post(url, headers=headers)
+
+    assert second_response.status_code == 409
+    assert second_response.json()["detail"] == (
+        "You are already enrolled in this course"
+    )
+
+
+def test_student_cannot_enroll_in_nonexistent_course():
+    token, _ = create_student_and_course("missing")
+
+    response = client.post(
+        "/courses/999999/enroll",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Course not found"
+
+def test_student_can_view_own_enrollments():
+    token, course_id = create_student_and_course("view")
+
+    headers = {"Authorization": f"Bearer {token}"}
+
+    enroll_response = client.post(
+        f"/courses/{course_id}/enroll",
+        headers=headers,
+    )
+    assert enroll_response.status_code == 201
+
+    response = client.get("/my-enrollments", headers=headers)
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert len(data) == 1
+    assert data[0]["course_id"] == course_id
+
+
+def test_instructor_cannot_enroll_in_course():
+    db = TestingSessionLocal()
+
+    instructor = User(
+        name="Restricted Instructor",
+        email="restricted_instructor@example.com",
+        password_hash=hash_password("test_password"),
+        role="instructor",
+    )
+
+    db.add(instructor)
+    db.commit()
+    db.close()
+
+    login_response = client.post(
+        "/login",
+        json={
+            "email": "restricted_instructor@example.com",
+            "password": "test_password",
+        },
+    )
+
+    assert login_response.status_code == 200
+    token = login_response.json()["access_token"]
+
+    response = client.post(
+        "/courses/999999/enroll",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Only students can enroll in courses"
