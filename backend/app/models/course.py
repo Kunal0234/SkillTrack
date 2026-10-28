@@ -13,3 +13,4 @@ class Course(Base):
     instructor_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     instructor = relationship("User", back_populates="courses")
+    lessons = relationship("Lesson", back_populates="course")

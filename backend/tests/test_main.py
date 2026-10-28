@@ -385,3 +385,275 @@ def test_instructor_cannot_enroll_in_course():
 
     assert response.status_code == 403
     assert response.json()["detail"] == "Only students can enroll in courses"
+
+def create_instructor_and_course(label):
+    db = TestingSessionLocal()
+
+    instructor = User(
+        name="Lesson Instructor",
+        email=f"lesson_instructor_{label}@example.com",
+        password_hash=hash_password("test_password"),
+        role="instructor",
+    )
+
+    db.add(instructor)
+    db.commit()
+    db.refresh(instructor)
+
+    course = Course(
+        title="Lesson Test Course",
+        description="Course for lesson testing",
+        instructor_id=instructor.id,
+    )
+
+    db.add(course)
+    db.commit()
+    db.refresh(course)
+
+    course_id = course.id
+    db.close()
+
+    login_response = client.post(
+        "/login",
+        json={
+            "email": f"lesson_instructor_{label}@example.com",
+            "password": "test_password",
+        },
+    )
+
+    assert login_response.status_code == 200
+    token = login_response.json()["access_token"]
+
+    return token, course_id
+
+def test_instructor_can_create_lesson():
+    token, course_id = create_instructor_and_course("create")
+
+    response = client.post(
+        f"/courses/{course_id}/lessons",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "title": "Introduction to Python",
+            "content": "Learn Python fundamentals",
+        },
+    )
+
+    assert response.status_code == 201
+
+    data = response.json()
+    assert data["title"] == "Introduction to Python"
+    assert data["content"] == "Learn Python fundamentals"
+    assert data["course_id"] == course_id
+    assert "id" in data
+
+def test_student_cannot_create_lesson():
+    student_token, course_id = create_student_and_course("lesson_restricted")
+
+    response = client.post(
+        f"/courses/{course_id}/lessons",
+        headers={"Authorization": f"Bearer {student_token}"},
+        json={
+            "title": "Unauthorized Lesson",
+            "content": "A student should not create this",
+        },
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Only instructors can create lessons"
+
+def test_instructor_cannot_create_lesson_in_another_instructors_course():
+    _, course_id = create_instructor_and_course("owner")
+
+    other_token, _ = create_instructor_and_course("other")
+
+    response = client.post(
+        f"/courses/{course_id}/lessons",
+        headers={"Authorization": f"Bearer {other_token}"},
+        json={
+            "title": "Unauthorized Lesson",
+            "content": "This instructor does not own the course",
+        },
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == (
+        "You can only add lessons to your own courses"
+    )
+
+def test_instructor_can_list_course_lessons():
+    token, course_id = create_instructor_and_course("list")
+
+    create_response = client.post(
+        f"/courses/{course_id}/lessons",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "title": "Python Introduction",
+            "content": "Python basics",
+        },
+    )
+    assert create_response.status_code == 201
+
+    response = client.get(f"/courses/{course_id}/lessons")
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert len(data) == 1
+    assert data[0]["title"] == "Python Introduction"
+    assert data[0]["course_id"] == course_id
+
+def test_get_single_lesson():
+    token, course_id = create_instructor_and_course("get_one")
+
+    create_response = client.post(
+        f"/courses/{course_id}/lessons",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "title": "FastAPI Introduction",
+            "content": "Learn FastAPI basics",
+        },
+    )
+    assert create_response.status_code == 201
+
+    lesson_id = create_response.json()["id"]
+
+    response = client.get(
+        f"/courses/{course_id}/lessons/{lesson_id}"
+    )
+
+    assert response.status_code == 200
+    assert response.json()["id"] == lesson_id
+    assert response.json()["title"] == "FastAPI Introduction"
+
+def test_instructor_can_update_lesson():
+    token, course_id = create_instructor_and_course("update")
+
+    headers = {"Authorization": f"Bearer {token}"}
+
+    create_response = client.post(
+        f"/courses/{course_id}/lessons",
+        headers=headers,
+        json={
+            "title": "Python Basics",
+            "content": "Basic concepts",
+        },
+    )
+    assert create_response.status_code == 201
+
+    lesson_id = create_response.json()["id"]
+
+    response = client.put(
+        f"/courses/{course_id}/lessons/{lesson_id}",
+        headers=headers,
+        json={
+            "title": "Advanced Python",
+            "content": "Advanced concepts",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["title"] == "Advanced Python"
+    assert response.json()["content"] == "Advanced concepts"
+
+def test_instructor_can_delete_lesson():
+    token, course_id = create_instructor_and_course("delete")
+
+    headers = {"Authorization": f"Bearer {token}"}
+
+    create_response = client.post(
+        f"/courses/{course_id}/lessons",
+        headers=headers,
+        json={
+            "title": "Temporary Lesson",
+            "content": "This lesson will be deleted",
+        },
+    )
+    assert create_response.status_code == 201
+
+    lesson_id = create_response.json()["id"]
+
+    delete_response = client.delete(
+        f"/courses/{course_id}/lessons/{lesson_id}",
+        headers=headers,
+    )
+
+    assert delete_response.status_code == 204
+
+    get_response = client.get(
+        f"/courses/{course_id}/lessons/{lesson_id}"
+    )
+    assert get_response.status_code == 404
+
+def test_instructor_cannot_update_another_instructors_lesson():
+    owner_token, course_id = create_instructor_and_course("update_owner")
+    other_token, _ = create_instructor_and_course("update_other")
+
+    create_response = client.post(
+        f"/courses/{course_id}/lessons",
+        headers={"Authorization": f"Bearer {owner_token}"},
+        json={
+            "title": "Original Lesson",
+            "content": "Original content",
+        },
+    )
+    assert create_response.status_code == 201
+
+    lesson_id = create_response.json()["id"]
+
+    response = client.put(
+        f"/courses/{course_id}/lessons/{lesson_id}",
+        headers={"Authorization": f"Bearer {other_token}"},
+        json={
+            "title": "Modified Lesson",
+            "content": "Modified content",
+        },
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == (
+        "You can only update lessons in your own courses"
+    )
+
+
+def test_instructor_cannot_delete_another_instructors_lesson():
+    owner_token, course_id = create_instructor_and_course("delete_owner")
+    other_token, _ = create_instructor_and_course("delete_other")
+
+    create_response = client.post(
+        f"/courses/{course_id}/lessons",
+        headers={"Authorization": f"Bearer {owner_token}"},
+        json={
+            "title": "Protected Lesson",
+            "content": "This lesson belongs to another instructor",
+        },
+    )
+    assert create_response.status_code == 201
+
+    lesson_id = create_response.json()["id"]
+
+    response = client.delete(
+        f"/courses/{course_id}/lessons/{lesson_id}",
+        headers={"Authorization": f"Bearer {other_token}"},
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == (
+        "You can only delete lessons in your own courses"
+    )
+
+def test_cannot_list_lessons_for_nonexistent_course():
+    response = client.get("/courses/999999/lessons")
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Course not found"
+
+
+def test_cannot_get_nonexistent_lesson():
+    token, course_id = create_instructor_and_course("missing_lesson")
+
+    response = client.get(
+        f"/courses/{course_id}/lessons/999999"
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Lesson not found"
