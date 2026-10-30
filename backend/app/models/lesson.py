@@ -25,3 +25,4 @@ class Lesson(Base):
     )
 
     course = relationship("Course", back_populates="lessons")
+    progress_records = relationship("Progress", back_populates="lesson")

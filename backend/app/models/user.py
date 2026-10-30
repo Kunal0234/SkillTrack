@@ -11,3 +11,5 @@ class User(Base):
     role = Column(String(20),nullable=False,default="student",server_default="student",)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     courses = relationship("Course", back_populates="instructor")
+
+    progress_records = relationship("Progress", back_populates="student")

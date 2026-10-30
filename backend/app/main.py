@@ -14,7 +14,8 @@ from app.models.enrollment import Enrollment
 from app.schemas.enrollment import EnrollmentRead
 from app.models.lesson import Lesson
 from app.schemas.lesson import LessonCreate, LessonRead
-
+from app.models.progress import Progress
+from app.schemas.progress import ProgressRead
 app = FastAPI(title="SkillTrack LMS")
 @app.get("/")
 def home():
@@ -425,3 +426,86 @@ def delete_lesson(
 
     db.delete(lesson)
     db.commit()
+
+@app.post("/lessons/{lesson_id}/complete", response_model=ProgressRead, status_code=201)
+def complete_lesson(
+    lesson_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    # Only students can complete lessons
+    if current_user.role != "student":
+        raise HTTPException(
+            status_code=403,
+            detail="Only students can complete lessons",
+        )
+
+    # Check whether the lesson exists
+    lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
+
+    if lesson is None:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+
+    # Check whether the student is enrolled in this lesson's course
+    enrollment = (
+        db.query(Enrollment)
+        .filter(
+            Enrollment.student_id == current_user.id,
+            Enrollment.course_id == lesson.course_id,
+        )
+        .first()
+    )
+
+    if enrollment is None:
+        raise HTTPException(
+            status_code=403,
+            detail="Enroll in the course before completing lessons",
+        )
+
+    # Prevent duplicate progress records
+    existing_progress = (
+        db.query(Progress)
+        .filter(
+            Progress.student_id == current_user.id,
+            Progress.lesson_id == lesson_id,
+        )
+        .first()
+    )
+
+    if existing_progress is not None:
+        raise HTTPException(
+            status_code=409,
+            detail="Lesson already completed",
+        )
+
+    # Save progress
+    progress = Progress(
+        student_id=current_user.id,
+        lesson_id=lesson_id,
+    )
+
+    db.add(progress)
+    db.commit()
+    db.refresh(progress)
+
+    return progress
+
+
+@app.get("/my-progress", response_model=list[ProgressRead])
+def get_my_progress(
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    if current_user.role != "student":
+        raise HTTPException(
+            status_code=403,
+            detail="Only students can view their progress",
+        )
+
+    progress_records = (
+        db.query(Progress)
+        .filter(Progress.student_id == current_user.id)
+        .all()
+    )
+
+    return progress_records
