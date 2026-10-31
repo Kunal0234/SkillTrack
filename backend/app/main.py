@@ -16,6 +16,14 @@ from app.models.lesson import Lesson
 from app.schemas.lesson import LessonCreate, LessonRead
 from app.models.progress import Progress
 from app.schemas.progress import ProgressRead
+from app.models.instructor_application import InstructorApplication
+from app.schemas.instructor_application import (
+    InstructorApplicationCreate,
+    InstructorApplicationRead,
+    InstructorApplicationReview,
+)
+from datetime import datetime, timezone
+from app.models.user import User
 app = FastAPI(title="SkillTrack LMS")
 @app.get("/")
 def home():
@@ -509,3 +517,150 @@ def get_my_progress(
     )
 
     return progress_records
+
+
+@app.post(
+    "/instructor-applications",
+    response_model=InstructorApplicationRead,
+    status_code=201,
+)
+def apply_for_instructor(
+    application_data: InstructorApplicationCreate,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    if current_user.role != "student":
+        raise HTTPException(
+            status_code=403,
+            detail="Only students can apply to become instructors",
+        )
+
+    existing_application = (
+        db.query(InstructorApplication)
+        .filter(InstructorApplication.user_id == current_user.id)
+        .first()
+    )
+
+    if existing_application is not None:
+        raise HTTPException(
+            status_code=409,
+            detail="You have already submitted an instructor application",
+        )
+
+    application = InstructorApplication(
+        user_id=current_user.id,
+        reason=application_data.reason,
+    )
+
+    db.add(application)
+    db.commit()
+    db.refresh(application)
+
+    return application
+
+
+
+@app.get(
+    "/admin/instructor-applications",
+    response_model=list[InstructorApplicationRead],
+)
+def get_instructor_applications(
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Only admins can view instructor applications",
+        )
+
+    return (
+        db.query(InstructorApplication)
+        .filter(InstructorApplication.status == "pending")
+        .order_by(InstructorApplication.created_at.asc())
+        .all()
+    )
+
+
+@app.patch(
+    "/admin/instructor-applications/{application_id}",
+    response_model=InstructorApplicationRead,
+)
+def review_instructor_application(
+    application_id: int,
+    review_data: InstructorApplicationReview,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Only admins can review instructor applications",
+        )
+
+    application = (
+        db.query(InstructorApplication)
+        .filter(InstructorApplication.id == application_id)
+        .first()
+    )
+
+    if application is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Instructor application not found",
+        )
+
+    if application.status != "pending":
+        raise HTTPException(
+            status_code=409,
+            detail="This application has already been reviewed",
+        )
+
+    application.status = review_data.status
+    application.reviewed_by = current_user.id
+    application.reviewed_at = datetime.now(timezone.utc)
+
+    if review_data.status == "approved":
+        applicant = (
+            db.query(User)
+            .filter(User.id == application.user_id)
+            .first()
+        )
+
+        if applicant is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Applicant user not found",
+            )
+
+        applicant.role = "instructor"
+
+    db.commit()
+    db.refresh(application)
+
+    return application
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

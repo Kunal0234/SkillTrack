@@ -12,6 +12,7 @@ from app.models import User, Course
 from app.models.enrollment import Enrollment
 from app.models.lesson import Lesson
 from app.models.progress import Progress
+from app.models.instructor_application import InstructorApplication
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
