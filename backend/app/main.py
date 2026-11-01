@@ -23,7 +23,7 @@ from app.schemas.instructor_application import (
     InstructorApplicationReview,
 )
 from datetime import datetime, timezone
-from app.models.user import User
+
 app = FastAPI(title="SkillTrack LMS")
 @app.get("/")
 def home():

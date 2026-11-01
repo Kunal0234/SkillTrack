@@ -7,3 +7,4 @@ __pycache__/
 .env.*
 !.env.example
 backend/.pytest_cache/
+notes.txt

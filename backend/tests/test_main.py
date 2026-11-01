@@ -657,3 +657,41 @@ def test_cannot_get_nonexistent_lesson():
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Lesson not found"
+
+def test_student_can_apply_for_instructor():
+    token, _ = create_student_and_course("instructor_application")
+
+    response = client.post(
+        "/instructor-applications",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "reason": "I want to teach Python and backend development."
+        },
+    )
+
+    assert response.status_code == 201
+    assert response.json()["status"] == "pending"
+
+
+def test_student_cannot_submit_duplicate_instructor_application():
+    token, _ = create_student_and_course("duplicate_instructor_application")
+
+    headers = {"Authorization": f"Bearer {token}"}
+    payload = {
+        "reason": "I want to teach Python and backend development."
+    }
+
+    first_response = client.post(
+        "/instructor-applications",
+        headers=headers,
+        json=payload,
+    )
+
+    second_response = client.post(
+        "/instructor-applications",
+        headers=headers,
+        json=payload,
+    )
+
+    assert first_response.status_code == 201
+    assert second_response.status_code == 409
