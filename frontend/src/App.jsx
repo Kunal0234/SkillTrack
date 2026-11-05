@@ -1,8 +1,13 @@
+import { Routes, Route, Navigate } from "react-router-dom";
+
 import Sidebar from "./components/Sidebar.jsx";
 import Navbar from "./components/Navbar.jsx";
+import Login from "./pages/Login.jsx";
+import Register from "./pages/Register.jsx";
+
 import "./App.css";
 
-function App() {
+function Dashboard() {
   const stats = [
     {
       title: "Enrolled Courses",
@@ -63,6 +68,19 @@ function App() {
         </section>
       </main>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
   );
 }
 
