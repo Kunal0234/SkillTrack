@@ -309,3 +309,15 @@
   color: #2563eb;
   font-weight: 600;
 }
+.logout-btn {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  background: #ef4444;
+  color: white;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background: #dc2626;
+}

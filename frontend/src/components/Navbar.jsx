@@ -1,4 +1,4 @@
-function Navbar() {
+function Navbar({ userName, onLogout }) {
   return (
     <header className="navbar">
       <div>
@@ -7,8 +7,12 @@ function Navbar() {
       </div>
 
       <div className="navbar-user">
-        <span>Student</span>
-        <div className="user-avatar">S</div>
+        <span>{userName}</span>
+        <div className="user-avatar">{userName.charAt(0).toUpperCase()}</div>
+
+        <button onClick={onLogout} className="logout-btn">
+          Logout
+        </button>
       </div>
     </header>
   );

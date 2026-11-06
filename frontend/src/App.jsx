@@ -4,10 +4,20 @@ import Sidebar from "./components/Sidebar.jsx";
 import Navbar from "./components/Navbar.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
-
 import "./App.css";
-
+import { useNavigate } from "react-router-dom";
+import ProtectedRoute from "./components/ProtectedRoute";
 function Dashboard() {
+  const navigate = useNavigate();
+
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+  const handleLogout = () => {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
+
   const stats = [
     {
       title: "Enrolled Courses",
@@ -31,11 +41,11 @@ function Dashboard() {
       <Sidebar />
 
       <main className="main-content">
-        <Navbar />
+        <Navbar userName={user.name || "Student"} onLogout={handleLogout} />
 
         <section className="dashboard-content">
           <div className="welcome-section">
-            <h1>Welcome back, Student! 👋</h1>
+            <h1>Welcome back, {user.name || "Student"}! 👋</h1>
             <p>Keep learning. Every lesson brings you closer to your goals.</p>
           </div>
 
@@ -76,7 +86,10 @@ function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      <Route path="/dashboard" element={<Dashboard />} />
+
+      <Route element={<ProtectedRoute />}>
+        <Route path="/dashboard" element={<Dashboard />} />
+      </Route>
 
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
