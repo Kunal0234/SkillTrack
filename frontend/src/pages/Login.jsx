@@ -34,7 +34,15 @@ const Login = () => {
 
       localStorage.setItem("user", JSON.stringify(profile));
 
-      navigate("/dashboard");
+      if (profile.role === "student") {
+        navigate("/student");
+      } else if (profile.role === "instructor") {
+        navigate("/instructor");
+      } else if (profile.role === "admin") {
+        navigate("/admin");
+      } else {
+        setError("Invalid user role");
+      }
     } catch (err) {
       setError(err.message);
       localStorage.removeItem("access_token");

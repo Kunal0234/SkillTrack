@@ -1,18 +1,18 @@
-function Navbar({ userName, onLogout }) {
+function Navbar({ userName, role }) {
   return (
     <header className="navbar">
       <div>
-        <h2>Dashboard</h2>
-        <p>Welcome back! Continue your learning journey.</p>
+        <h2>SkillTrack</h2>
+        <p>Welcome back! Continue your journey.</p>
       </div>
 
       <div className="navbar-user">
-        <span>{userName}</span>
-        <div className="user-avatar">{userName.charAt(0).toUpperCase()}</div>
+        <div>
+          <span>{userName}</span>
+          <p>{role}</p>
+        </div>
 
-        <button onClick={onLogout} className="logout-btn">
-          Logout
-        </button>
+        <div className="user-avatar">{userName.charAt(0).toUpperCase()}</div>
       </div>
     </header>
   );

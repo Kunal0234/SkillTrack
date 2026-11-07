@@ -1,84 +1,29 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
-import Sidebar from "./components/Sidebar.jsx";
-import Navbar from "./components/Navbar.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
-import "./App.css";
-import { useNavigate } from "react-router-dom";
-import ProtectedRoute from "./components/ProtectedRoute";
-function Dashboard() {
-  const navigate = useNavigate();
 
+import ProtectedRoute from "./components/ProtectedRoute";
+
+import StudentDashboard from "./pages/StudentDashboard.jsx";
+import InstructorDashboard from "./pages/InstructorDashboard.jsx";
+import AdminDashboard from "./pages/AdminDashboard.jsx";
+
+import "./App.css";
+function RoleRoute({ allowedRole, children }) {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-  const handleLogout = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("user");
-    navigate("/login");
-  };
+  if (user.role !== allowedRole) {
+    const paths = {
+      student: "/student",
+      instructor: "/instructor",
+      admin: "/admin",
+    };
 
-  const stats = [
-    {
-      title: "Enrolled Courses",
-      value: "04",
-      description: "Courses you're learning",
-    },
-    {
-      title: "Completed Lessons",
-      value: "12",
-      description: "Lessons completed so far",
-    },
-    {
-      title: "Learning Progress",
-      value: "65%",
-      description: "Overall progress",
-    },
-  ];
+    return <Navigate to={paths[user.role] || "/login"} replace />;
+  }
 
-  return (
-    <div className="app-layout">
-      <Sidebar />
-
-      <main className="main-content">
-        <Navbar userName={user.name || "Student"} onLogout={handleLogout} />
-
-        <section className="dashboard-content">
-          <div className="welcome-section">
-            <h1>Welcome back, {user.name || "Student"}! 👋</h1>
-            <p>Keep learning. Every lesson brings you closer to your goals.</p>
-          </div>
-
-          <div className="stats-grid">
-            {stats.map((stat) => (
-              <div className="stat-card" key={stat.title}>
-                <p>{stat.title}</p>
-                <h2>{stat.value}</h2>
-                <span>{stat.description}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="learning-section">
-            <h2>Continue Learning</h2>
-
-            <div className="course-card">
-              <div>
-                <h3>Python Full Stack Development</h3>
-                <p>Keep going! You're making progress.</p>
-              </div>
-
-              <span className="progress-label">65% completed</span>
-
-              <div className="progress-bar">
-                <div className="progress-fill"></div>
-              </div>
-            </div>
-          </div>
-        </section>
-      </main>
-    </div>
-  );
+  return children;
 }
 
 function App() {
@@ -88,7 +33,32 @@ function App() {
       <Route path="/register" element={<Register />} />
 
       <Route element={<ProtectedRoute />}>
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route
+          path="/student"
+          element={
+            <RoleRoute allowedRole="student">
+              <StudentDashboard />
+            </RoleRoute>
+          }
+        />
+
+        <Route
+          path="/instructor"
+          element={
+            <RoleRoute allowedRole="instructor">
+              <InstructorDashboard />
+            </RoleRoute>
+          }
+        />
+
+        <Route
+          path="/admin"
+          element={
+            <RoleRoute allowedRole="admin">
+              <AdminDashboard />
+            </RoleRoute>
+          }
+        />
       </Route>
 
       <Route path="/" element={<Navigate to="/login" replace />} />
@@ -96,5 +66,6 @@ function App() {
     </Routes>
   );
 }
+
 
 export default App;
