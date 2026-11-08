@@ -190,3 +190,8 @@ This project is currently under development. A license will be added when one is
 **Kunal**
 
 GitHub: [@Kunal0234](https://github.com/Kunal0234)
+
+## Development Update
+- Role-based dashboards implemented for Student, Instructor, and Admin.
+- Common dashboard layout added.
+
