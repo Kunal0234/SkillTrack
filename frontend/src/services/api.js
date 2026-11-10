@@ -51,3 +51,93 @@ export async function getMyProfile(token) {
 
   return data;
 }
+
+export async function getInstructorCourses(token) {
+  const response = await fetch(`${API_BASE_URL}/instructor/courses`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.detail || "Could not fetch instructor courses");
+  }
+
+  return data;
+}
+
+export async function getMyEnrollments(token) {
+  const response = await fetch(`${API_BASE_URL}/my-enrollments`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.detail || "Could not fetch enrollments");
+  }
+
+  return data;
+}
+
+export async function getMyProgress(token) {
+  const response = await fetch(`${API_BASE_URL}/my-progress`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.detail || "Could not fetch progress");
+  }
+
+  return data;
+}
+
+export async function getCourses() {
+  const response = await fetch(`${API_BASE_URL}/courses`);
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.detail || "Could not fetch courses");
+  }
+
+  return data;
+}
+export async function enrollInCourse(courseId, token) {
+  const response = await fetch(`${API_BASE_URL}/courses/${courseId}/enroll`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.detail || "Enrollment failed");
+  }
+
+  return data;
+}
+export async function createCourse(courseData, token) {
+  const response = await fetch(`${API_BASE_URL}/courses`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(courseData),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.detail || "Course creation failed");
+  }
+
+  return data;
+}

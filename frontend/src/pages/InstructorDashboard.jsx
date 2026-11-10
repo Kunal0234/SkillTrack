@@ -1,20 +1,29 @@
+
+import { useEffect, useState } from "react";
 import DashboardLayout from "../components/DashboardLayout.jsx";
+import StatCard from "../components/StatCard.jsx";
+import { getInstructorCourses } from "../services/api.js";
 
 const InstructorDashboard = () => {
-  const courses = [
-    {
-      id: 1,
-      title: "Python Full Stack Development",
-      students: 25,
-      lessons: 12,
-    },
-    {
-      id: 2,
-      title: "Generative AI Fundamentals",
-      students: 18,
-      lessons: 8,
-    },
-  ];
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const token = localStorage.getItem("access_token");
+        const data = await getInstructorCourses(token);
+        setCourses(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCourses();
+  }, []);
 
   return (
     <DashboardLayout>
@@ -25,31 +34,33 @@ const InstructorDashboard = () => {
         </div>
 
         <div className="stats-container">
-          <div className="stat-card">
-            <h3>Total Courses</h3>
-            <h2>{courses.length}</h2>
-          </div>
-
-          <div className="stat-card">
-            <h3>Total Students</h3>
-            <h2>
-              {courses.reduce((total, course) => total + course.students, 0)}
-            </h2>
-          </div>
+          <StatCard
+            title="Total Courses"
+            value={courses.length}
+            description="Courses created by you"
+          />
         </div>
 
         <div className="courses-section">
           <h2>My Courses</h2>
 
-          <div className="courses-grid">
-            {courses.map((course) => (
-              <div className="course-card" key={course.id}>
-                <h3>{course.title}</h3>
-                <p>{course.students} Students</p>
-                <p>{course.lessons} Lessons</p>
-              </div>
-            ))}
-          </div>
+          {loading && <p>Loading courses...</p>}
+          {error && <p>{error}</p>}
+
+          {!loading && !error && courses.length === 0 && (
+            <p>You haven't created any courses yet.</p>
+          )}
+
+          {!loading && !error && (
+            <div className="courses-grid">
+              {courses.map((course) => (
+                <div className="course-card" key={course.id}>
+                  <h3>{course.title}</h3>
+                  <p>{course.description}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </DashboardLayout>

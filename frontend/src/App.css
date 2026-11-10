@@ -321,3 +321,118 @@
 .logout-btn:hover {
   background: #dc2626;
 }
+
+/* Explore Courses */
+
+.courses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 22px;
+  margin-top: 24px;
+}
+
+.course-card {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.course-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+.enroll-btn {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s ease;
+}
+
+.enroll-btn:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.enroll-btn:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .courses-grid {
+    grid-template-columns: 1fr;
+  }
+}
+/* Create Course Page */
+
+.create-course-form {
+  max-width: 650px;
+  margin-top: 28px;
+  padding: 28px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.create-course-form label {
+  font-weight: 600;
+  color: #334155;
+  margin-top: 8px;
+}
+
+.create-course-form input,
+.create-course-form textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font: inherit;
+  outline: none;
+}
+
+.create-course-form input:focus,
+.create-course-form textarea:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.create-course-form textarea {
+  resize: vertical;
+}
+
+.create-course-form button {
+  margin-top: 12px;
+  padding: 12px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.create-course-form button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.error-message {
+  color: #dc2626;
+}
+
+.success-message {
+  color: #16a34a;
+}
+
+@media (max-width: 600px) {
+  .create-course-form {
+    padding: 18px;
+  }
+}

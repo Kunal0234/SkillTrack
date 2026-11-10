@@ -1,12 +1,27 @@
+
 import { Link } from "react-router-dom";
 
 function Sidebar({ role, onLogout }) {
   const navigation = {
-    student: [{ label: "Dashboard", path: "/student" }],
+    student: [
+      { label: "Dashboard", path: "/student" },
+      { label: "Explore Courses", path: "/student/explore" },
+      { label: "My Learning", path: "/student/learning" },
+      { label: "My Progress", path: "/student/progress" },
+      { label: "Profile", path: "/student/profile" },
+    ],
 
-    instructor: [{ label: "Dashboard", path: "/instructor" }],
+    instructor: [
+      { label: "Dashboard", path: "/instructor" },
+      { label: "My Courses", path: "/instructor/courses" },
+      { label: "Create Course", path: "/instructor/courses/create" },
+    ],
 
-    admin: [{ label: "Dashboard", path: "/admin" }],
+    admin: [
+      { label: "Dashboard", path: "/admin" },
+      { label: "Users", path: "/admin/users" },
+      { label: "Applications", path: "/admin/applications" },
+    ],
   };
 
   const links = navigation[role] || [];

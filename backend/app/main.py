@@ -169,6 +169,27 @@ def create_course(
         "instructor_id": new_course.instructor_id
     }
 
+
+@app.get("/instructor/courses", response_model=list[CourseRead])
+def get_instructor_courses(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role != "instructor":
+        raise HTTPException(
+            status_code=403,
+            detail="Only instructors can view their courses"
+        )
+
+    courses = (
+        db.query(Course)
+        .filter(Course.instructor_id == current_user.id)
+        .all()
+    )
+
+    return courses
+
+
 @app.get("/courses", response_model=list[CourseRead])
 def get_courses(db: Session = Depends(get_db)):
     courses = db.query(Course).all()
