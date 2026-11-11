@@ -141,3 +141,48 @@ export async function createCourse(courseData, token) {
 
   return data;
 }
+
+export async function getInstructorApplications(token) {
+  const response = await fetch(
+    `${API_BASE_URL}/admin/instructor-applications`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.detail || "Could not fetch applications");
+  }
+
+  return data;
+}
+
+export async function reviewInstructorApplication(
+  applicationId,
+  status,
+  token
+) {
+  const response = await fetch(
+    `${API_BASE_URL}/admin/instructor-applications/${applicationId}`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status }),
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.detail || "Could not review application");
+  }
+
+  return data;
+}

@@ -16,6 +16,7 @@ import Profile from "./pages/Profile.jsx";
 
 import CreateCourse from "./pages/CreateCourse.jsx";
 import InstructorCourses from "./pages/InstructorCourses.jsx";
+import AdminApplications from "./pages/AdminApplications.jsx";
 
 import "./App.css";
 
@@ -129,6 +130,14 @@ function App() {
         />
       </Route>
 
+      <Route
+        path="/admin/applications"
+        element={
+          <RoleRoute allowedRole="admin">
+            <AdminApplications />
+          </RoleRoute>
+        }
+      />
       {/* Default Routes */}
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
