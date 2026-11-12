@@ -480,3 +480,31 @@
 .admin-action-btn:hover {
   background: #1d4ed8;
 }
+
+.course-search {
+  display: flex;
+  gap: 10px;
+  margin: 24px 0;
+  max-width: 600px;
+}
+
+.course-search input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+}
+
+.course-search input:focus {
+  border-color: #6366f1;
+}
+
+.course-search button {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  background: #e2e8f0;
+  cursor: pointer;
+}

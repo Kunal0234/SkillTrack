@@ -13,6 +13,7 @@ const ExploreCourses = () => {
   const [loadingCourseId, setLoadingCourseId] = useState(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -58,12 +59,32 @@ const ExploreCourses = () => {
     (enrollment) => enrollment.course_id,
   );
 
+  const filteredCourses = courses.filter((course) => {
+    const query = search.toLowerCase().trim();
+
+    return (
+      (course.title || "").toLowerCase().includes(query) ||
+      (course.description || "").toLowerCase().includes(query)
+    );
+  });
+
   return (
     <DashboardLayout>
       <section className="dashboard-content">
         <div className="welcome-section">
           <h1>Explore Courses</h1>
           <p>Discover courses and start learning something new.</p>
+        </div>
+
+        <div className="course-search">
+          <input
+            type="text"
+            placeholder="Search courses by title or description..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+
+          {search && <button onClick={() => setSearch("")}>Clear</button>}
         </div>
 
         {loading && <p>Loading courses...</p>}
@@ -74,9 +95,13 @@ const ExploreCourses = () => {
           <p>No courses are available right now.</p>
         )}
 
-        {!loading && (
+        {!loading && courses.length > 0 && filteredCourses.length === 0 && (
+          <p>No courses found for "{search}".</p>
+        )}
+
+        {!loading && filteredCourses.length > 0 && (
           <div className="courses-grid">
-            {courses.map((course) => {
+            {filteredCourses.map((course) => {
               const isEnrolled = enrolledCourseIds.includes(course.id);
 
               return (
