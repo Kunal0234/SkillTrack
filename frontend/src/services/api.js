@@ -186,3 +186,40 @@ export async function reviewInstructorApplication(
 
   return data;
 }
+
+
+export async function updateCourse(courseId, courseData, token) {
+  const response = await fetch(`${API_BASE_URL}/courses/${courseId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(courseData),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.detail || "Course update failed");
+  }
+
+  return data;
+}
+
+export async function deleteCourse(courseId, token) {
+  const response = await fetch(`${API_BASE_URL}/courses/${courseId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.detail || "Course deletion failed");
+  }
+
+  return data;
+}
